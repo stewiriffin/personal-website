@@ -4,12 +4,19 @@ import { useRouter } from 'next/router'
 
 export default function PageTransition({ children }: { children: React.ReactNode }) {
   const [isAnimating, setIsAnimating] = useState(false)
+  const [displayChildren, setDisplayChildren] = useState(children)
   const router = useRouter()
 
   useEffect(() => {
-    const handleStart = () => setIsAnimating(true)
+    const handleStart = () => {
+      setIsAnimating(true)
+    }
+
     const handleComplete = () => {
-      setIsAnimating(false)
+      // Small delay to ensure smooth transition
+      setTimeout(() => {
+        setIsAnimating(false)
+      }, 100)
     }
 
     router.events.on('routeChangeStart', handleStart)
@@ -23,15 +30,37 @@ export default function PageTransition({ children }: { children: React.ReactNode
     }
   }, [router])
 
+  // Update children after animation starts
+  useEffect(() => {
+    if (!isAnimating) {
+      setDisplayChildren(children)
+    }
+  }, [isAnimating, children])
+
   return (
     <>
+      {/* Page Transition Overlay */}
       {isAnimating && (
         <div className="fixed inset-0 z-[9998] pointer-events-none">
-          <div className="absolute inset-0 bg-gradient-to-br from-blue-600 to-purple-600 animate-slideIn origin-left"></div>
+          {/* Sliding overlay */}
+          <div className="absolute inset-0 bg-gradient-to-br from-blue-600 via-purple-600 to-pink-600 animate-slideInRight origin-left" />
+
+          {/* Optional: Add a loading indicator */}
+          <div className="absolute inset-0 flex items-center justify-center">
+            <div className="w-16 h-16 border-4 border-white/30 border-t-white rounded-full animate-spin" />
+          </div>
         </div>
       )}
-      <div className={isAnimating ? 'opacity-0' : 'opacity-100 transition-opacity duration-300'}>
-        {children}
+
+      {/* Content with fade transition */}
+      <div
+        className={`transition-all duration-500 ${
+          isAnimating
+            ? 'opacity-0 scale-95 blur-sm'
+            : 'opacity-100 scale-100 blur-0'
+        }`}
+      >
+        {displayChildren}
       </div>
     </>
   )
